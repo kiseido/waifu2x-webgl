@@ -1,0 +1,38 @@
+
+html, body {
+
+}
+
+body {
+
+}
+section#upscaler {
+    background: rgba(128, 128, 128, 0.5);
+    display: grid;
+    grid-template-columns: 100%;
+}
+
+section#upscaler #previewPane {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 100%;
+}
+
+section#upscaler #previewPane > * {
+    grid-column: 1 / -1;;
+    grid-row: 1 / -1;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+section#upscaler #previewPane img {
+    width: 100%;
+    height: auto;
+}
+
+section#upscaler #previewPane canvas {
+    width: 100%;
+    height: auto;
+}
