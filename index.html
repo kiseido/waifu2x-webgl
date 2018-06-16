@@ -4,66 +4,106 @@
     <style type="text/css">
     </style>
     <link href="css/main.css" rel="stylesheet" type="text/css">
-    <script type="text/javascript" src="js/common.js"></script>
-    <script type="text/javascript" src="js/waifu2xgl.js"></script>
-    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/helpers.js"></script>
+    <script type="text/javascript" src="js/waifuNx.js"></script>
+    <!-- <script type="text/javascript" src="js/main.js"></script> -->
     <script type="text/javascript">
-        var canvas, image;
+
+
+        var waifuNx;
+
         function init(event) {
-            if(document.readyState != 'complete') {
+            if (document.readyState != 'complete') {
                 return;
             }
-            canvas = document.querySelector("#mycanvas");
-            image = document.querySelector("#myimg");
+            inputCanvas = document.querySelector("canvas.input");
+            outputCanvas = document.querySelector("canvas.output");
+            inputImage = document.querySelector("img.input");
+
+            waifuNx = new WaifuNx(inputCanvas, outputCanvas);
+
+            waifuNx.onStatusUpdate = function (message, condition) {
+                let statusElem = document.querySelector("#status");
+                statusElem.dataset.condition = condition;
+                statusElem.textContent = message;
+            };
         }
-        function setStatus(msg) {
-            let statusElem = document.querySelector("#status");
-            statusElem.textContent = msg;
-        }
-        function stopOp(event) {
-            const mycanvas = document.getElementById("mycanvas");
-            if (mycanvas.dataset.opstatus)
-                mycanvas.dataset.opstatus = 'stop';
-        }
-        function upscaleBegin(event) {
+
+        async function upscaleBegin(event) {
             event.preventDefault();
 
             let form = event.target;
-            // const image = document.querySelector("#myimg");
+
             const option = "models/" + form['modeSelect'].selectedOptions[0].value;
-            // const mycanvas = document.getElementById("mycanvas");
 
-            // {WebGLRenderingContext}
-            // const myctx = mycanvas.getContext('2d');
-            scale(image, mycanvas, option);
+            // scale(image, inputCanvas, option);
 
+            let model = await readJson(option);
+
+            await waifuNx.init(model);
+            waifuNx.startWaifu();
         }
         function updateImage(event) {
             console.log("image", event);
             let fr = new FileReader();
             let imageInput = event.target;
             let file = imageInput.files[0];
-            // let img = document.querySelector("#myimg");
-            
+
             /** @param ProgressEvent **/
             fr.onload = function (event) {
                 console.log(file, arguments);
+                let image = document.createElement('img');
                 image.dataset.fileName = file.name;
                 image.dataset.type = file.type;
                 image.src = fr.result;
-                setTimeout(function(){
-                    copyImageToCanvas(image, canvas);
+                setTimeout(function () {
+                    waifuNx.InputFromImage(image);
+                    // copyImageToCanvas(image, canvas);
                 });
             }
 
             fr.readAsDataURL(file);
+        }
+        function copyOutputToInput(event) {
+            let inCanvas = waifuNx.inputCanvas;
+            let outCanvas = waifuNx.outputCanvas;
+            let inCTX = inCanvas.getContext('2d');
+            // let outCTX = outCanvas.getContext('2d');
+            inCanvas.width = outCanvas.width;
+            inCanvas.height = outCanvas.height;
+            inCTX.drawImage(outCanvas, 0, 0);
+        }
+        function downscale(event, scale) {
+            let inCanvas = waifuNx.inputCanvas;
+
+            let width = Math.ceil(inCanvas.width / scale);
+            let height = Math.ceil(inCanvas.height / scale);
+
+            let offScreen = document.createElement('canvas');
+            offScreen.width = width;
+            offScreen.height = height;
+
+            let offCtx = offScreen.getContext('2d');
+            offCtx.scale(0.5,0.5);
+            offCtx.drawImage(inCanvas, 0, 0);
+            
+            inCanvas.width = width;
+            inCanvas.height = height;
+            
+            let inCTX = inCanvas.getContext('2d');
+            inCTX.drawImage(offScreen, 0, 0);
         }
         document.onreadystatechange = init;
     </script>
 </head>
 
 <body>
+    <header>
+        <h1>Waifu
+            <del>2x</del> Nx</h1>
+    </header>
     <section id="upscaler">
+        <span id="status">Waiting</span>
         <form onsubmit="upscaleBegin(event)">
             <span>Select your file:</span>
             <input required type="file" name="imageInput" accept="image/*" onchange="updateImage(event)">
@@ -76,15 +116,22 @@
                 <option value="noise3_model.json">High Denoise & Upscale 2x</option>
             </select>
             <div>
-                <span id="status">Waiting</span>
+
                 <input type="submit" value="Run!">
-                <input type="button" value="Stop" onclick="stopOp(event)">
+                <input type="button" value="Stop" onclick="waifuNx.stopWaifu(event)">
+            </div>
+            <div>
+                <input type="button" value="Copy output to input" onclick="copyOutputToInput(event)">
+                <input type="button" value="Downscale 2x" onclick="downscale(event,2)">
             </div>
 
         </form>
-        <div id="previewPane">
-            <img id="myimg" style="display: none;">
-            <canvas id="mycanvas"></canvas>
+        <img class="input" style="display: none;">
+        <div class="peak">
+            <canvas class="input"></canvas>
+        </div>
+        <div class="peak">
+            <canvas class="output"></canvas>
         </div>
     </section>
 </body>
