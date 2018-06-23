@@ -30,7 +30,7 @@ function packRGBA(r, g, b, a) {
 /**
     * @return {HTMLCanvasElement}
     */
-   function createCanvas(width, height) {
+function createCanvas(width, height) {
     const canvas = document.createElement('canvas');
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
@@ -109,7 +109,8 @@ HTMLCanvasElement.prototype.scale = function (sx, sy) {
 };
 
 async function readJson(path) {
-    return await (await fetch(path)).json();
+    return await (await fetch(path)).json()
+        .catch(function () { throw new Error(); });
 }
 
 async function readText(path) {

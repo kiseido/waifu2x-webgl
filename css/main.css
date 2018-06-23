@@ -22,7 +22,8 @@ section#upscaler #status {
     background-color: grey;
     padding: .5em 1em .5em 1em;
     justify-self: center;
-    width: 100%;
+    width: 101%;
+    border-radius: 0.2em;
 }
 
 section#upscaler #status[data-condition="running"] {
@@ -40,14 +41,23 @@ section#upscaler #previewPane {
 }
 
 section#upscaler .peak {
+    position: relative;
     box-sizing: border-box;
-    margin: 0;
-    padding: 1em;
+    margin: 0.1em;
+    padding: 0em;
     border: 0;
     overflow-x: auto;
     overflow-y: auto;
     max-height: 80vh;
     max-width: 80vw;
+    width: 100%;
+    border: 0.1em solid rgba(128, 128, 128, 0.5);
+}
+
+section#upscaler .peak span {
+    position: absolute;
+    left: 50%;
+    
 }
 
 section#upscaler #previewPane img {
