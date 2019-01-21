@@ -6,9 +6,9 @@ class WaifuNx {
         this.noiseReduce = 0;
 
         this.models = [];
-        this.scaleModel = null;
+        this.model = -1;
 
-        this.blockSize = 256;
+        this.blockSize = 128;
         this.steps = null;
         this.programs = null;
         this.biases = null;
@@ -18,7 +18,7 @@ class WaifuNx {
     }
 
     async startWaifu() {
-        if(this.isReady != true) {
+        if (this.isReady != true) {
             throw new Error('WaifuNx not yet setup!');
         }
         let inCanvas = this.inputCanvas;
@@ -86,7 +86,7 @@ class WaifuNx {
         const startStart = Date.now();
 
         outCanvas.dataset.opstatus = 'running';
-        this.statusUpdate("Running",'running');
+        this.statusUpdate("Running", 'running');
 
         for (let yc = 0; yc < ychunks; yc++) {
             for (let xc = 0; xc < xchunks; xc++) {
@@ -128,8 +128,30 @@ class WaifuNx {
         console.log('totalTime: ', endEnd - startStart);
     }
 
-    async init(model) {
-        console.log('WaifuNx init',arguments);
+    setmodel(name) {
+        this.steps = this.models[name];
+        this.model = name;
+    }
+    async loadModel(name) {
+        if (Object.keys(this.models).includes(name)) {
+
+        } else {
+            this.models[name] = await readJson(name);
+        }
+    }
+
+    addModel(name, model) {
+        console.log('model add', arguments);
+        this.models[name] = model;
+    }
+
+    async init() {
+        if (this.steps == null) {
+            await this.loadModel('models/scale2.0x_model.json');
+            this.setmodel('models/scale2.0x_model.json');
+        }
+
+        console.log('WaifuNx init', arguments);
         let webglCanvas = createCanvas(32, 32);
         let gl = webglCanvas.getContext('webgl');
         this.gl = gl;
@@ -143,7 +165,7 @@ class WaifuNx {
         this.vert = vert;
         this.frag = frag;
 
-        this.steps = model;
+
 
         this.programs = this.steps.map((v) => {
             let prefix = `const int NUM_INPUTS = ${v.nInputPlane};`;
@@ -267,13 +289,7 @@ class WaifuNx {
         return Bitmap32.fromFloat(this.blockSize, this.blockSize, out.alphaTo1()).sliceCopy(7, 7, this.blockSize - 7, this.blockSize - 7).yCbCrToRgba();
     }
 
-    setScaleModel(parsedJsonModel) {
-        this.scaleModel = parsedJsonModel;
-    }
 
-    addModel(parsedJsonModel) {
-
-    }
 
     InputFromImage(imageElement) {
         let ctx = inputCanvas.getContext('2d');
